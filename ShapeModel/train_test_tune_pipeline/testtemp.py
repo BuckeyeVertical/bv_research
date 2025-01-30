@@ -1,5 +1,7 @@
 import cv2, os
 from ultralytics import YOLO
+import matplotlib as plt
+import numpy as np
 
 # Load the YOLO model
 model_dir = "ShapeModel/train_test_tune_pipeline/models"
@@ -33,7 +35,12 @@ while cap.isOpened():
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot()
-        print(results[0].cpu())
+        #https://docs.ultralytics.com/reference/engine/results/#ultralytics.engine.results.Results.save_txt 
+        print(f"SPEED: ",results[0].speed)
+        print(f"SUMMARY: ", results[0].summary())
+        #print(f"NAMES: ", results[0].names)
+        print(f"PROBS: ", results[0].probs)
+        results[0].save_txt("ShapeModel/train_test_tune_pipeline/test.txt", True)
 
         # Write the annotated frame to the output video
         out.write(annotated_frame)
@@ -53,4 +60,3 @@ cap.release()
 out.release()
 cv2.destroyAllWindows()
 
-print(f"Annotated video saved to {output_path}")
