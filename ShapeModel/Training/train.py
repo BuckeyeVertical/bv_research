@@ -1,43 +1,53 @@
+import argparse
+import yaml
+import torch
+import wandb
 from ultralytics import YOLO
-import os, torch
 
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="Train YOLO model with a given config file")
+parser.add_argument("--config", required=True, help="Path to the config YAML file")
+args = parser.parse_args()
 
-torch.cuda.empty_cache()
+# Load config file
+with open(args.config, 'r') as f:
+    config = yaml.safe_load(f)
 
-#load the model
-model = YOLO("yolo11m.pt")#loads nano detection YOLO version 8 neural network
+# Load the model
+model = YOLO(config.get("model_path", "yolo11m.pt"))
 
-yaml_path = '/users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/data.yaml'
-n_epochs = 30
-bs = 4
-#bs = -1
-gpu_id = 0
-#gpu_id = [0,1]
-#gpu_id = cpu
-imgSize = 1920
-waitNum = 5
-workerNum = 1
-#workerNum = torch.cuda.device_count()
-#workerNum = os.cpu_count()
-OptimizerChoice = 'auto'
-validate = True
+# Load wandb
+wandb.login(key="") # Input key on cluster
 
-#Train
+# Extract training parameters from config
+exp_name = config["name"]
+yaml_path = config["class_names_path"]
+n_epochs = config.get("num_epochs", 30)
+bs = config.get("batch_size", 4)
+gpu_id = config.get("gpu_id", 0)
+img_size = config.get("img_size", 1920)
+wait_num = config.get("patience_time", 5)
+worker_num = config.get("num_workers", 1)
+optimizer_choice = config.get("optimizer", "auto")
+validate = config.get("validation_bool", True)
+lr0 = config.get("learning_rate_initial", 0.0003)
+lrf = config.get("learning_rate_final", 0.0006)
+
+# Train the model
 if __name__ == '__main__':
-    results = model.train(data = yaml_path,
-                      imgsz = imgSize,
-                      pretrained = True,
-                      name = "dev11_01",
-                      cos_lr=True,
-                      #lr0=0.00269,
-                      #lrf=0.00288,
-                      lr0=0.0003,
-                      lrf=0.0006,
-                      epochs = n_epochs,
-                      batch = bs,
-                      device = gpu_id,
-                      patience = waitNum,
-                      val = validate,
-                      workers = torch.multiprocessing.cpu_count,)
-#config file draws in the path and training data along with the validation info
-
+    model.train(
+        data=yaml_path,
+        imgsz=img_size,
+        pretrained=True,
+        name=exp_name,
+        cos_lr=True,
+        lr0=lr0,
+        lrf=lrf,
+        epochs=n_epochs,
+        batch=bs,
+        device=gpu_id,
+        patience=wait_num,
+        val=validate,
+        workers=torch.multiprocessing.cpu_count,
+        project = exp_name
+    )
