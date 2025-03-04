@@ -7,7 +7,7 @@ torch.cuda.empty_cache()
 #load the model
 model = YOLO("yolo11m.pt")#loads nano detection YOLO version 8 neural network
 
-yaml_path = '/users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/data1.yaml'
+yaml_path = '/users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/data.yaml'
 n_epochs = 30
 bs = 4
 #bs = -1
@@ -38,6 +38,6 @@ if __name__ == '__main__':
                       device = gpu_id,
                       patience = waitNum,
                       val = validate,
-                      workers = workerNum,)
+                      workers = torch.multiprocessing.cpu_count,)
 #config file draws in the path and training data along with the validation info
 

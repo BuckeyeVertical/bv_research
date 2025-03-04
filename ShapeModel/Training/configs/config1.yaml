@@ -3,7 +3,7 @@ model_name: "yolo11m.pt"
 class_names_path: "../data.yaml" # /Training/data.yaml
 img_size: 3840
 pretrained_bool: True
-cos_lr_bool: True
+cos_lr_bool: False
 learning_rate_initial: 0.0003
 learning_rate_final: 0.0006
 num_epochs: 30

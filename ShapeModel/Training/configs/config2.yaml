@@ -1,4 +1,4 @@
-name: "TrainRun1" # Change this
+name: "TrainRun2" # Change this
 model_name: "yolo11m.pt"
 class_names_path: "../data.yaml" # /Training/data.yaml
 img_size: 3840

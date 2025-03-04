@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=pas2926
 #SBATCH --job-name=auto_sbatch    # Job name
-#SBATCH --nodes=1 --ntasks-per-node=28 --gpus-per-node=1 --gpu_cmode=shared
+#SBATCH --nodes=1 --ntasks-per-node=28 --gpus-per-node=2 --gpu_cmode=shared
 #SBATCH --time=8:30:00         # Time limit hrs:min:sec
 #SBATCH --output=auto_sbatch.log  # Standard output and error log
 #SBATCH --mail-type=ALL
@@ -43,7 +43,7 @@ for config_file in ${CONFIG_DIR}/config*.yaml; do
         echo "Submitting job for config${config_index}.yaml"
         
         # Submit the job and capture the job ID
-        job_id=$(sbatch --parsable --wrap="python $TRAIN_SCRIPT --config $config_file")
+        job_id=$(sbatch --parsable --wrap="module load miniconda3/23.3.1-py310 cuda/12.3.0 && source activate yolo_test && python $TRAIN_SCRIPT --config $config_file")
         
         echo "Submitted job ${job_id} for config${config_index}.yaml"
         
