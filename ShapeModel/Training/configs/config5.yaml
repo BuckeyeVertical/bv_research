@@ -1,7 +1,7 @@
 name: "TrainRun1" # Change this
 model_name: "yolo11m.pt"
-class_names_path: "../data.yaml" # /Training/data.yaml
-img_size: 3840
+class_names_path: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/data.yaml # /Training/data.yaml
+img_size: 1920
 pretrained_bool: True
 cos_lr_bool: True
 learning_rate_initial: 0.001

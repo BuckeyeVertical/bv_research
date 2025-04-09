@@ -33,7 +33,7 @@ for config_file in ${CONFIG_DIR}/config*.yaml; do
         echo "Submitted job ${job_id} for ${filename}"
 
         # Optional: add a delay between submissions (60 seconds)
-        sleep 60
+        sleep 1
     fi
 done
 

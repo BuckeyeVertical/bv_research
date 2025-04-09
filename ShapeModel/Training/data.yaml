@@ -1,6 +1,6 @@
-path: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/Datasets/dataset0226 
-train: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Datasets/Training/dataset0226/train/images # the location of the training images !DO NOT CHANGE!
-val: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Datasets/Training/dataset0226/valid/images # the location of the validation images !DO NOT CHANGE!
+path: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/Datasets/dataset0326 
+train: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/Datasets/dataset0326/train/images # the location of the training images !DO NOT CHANGE!
+val: /users/PAS2926/inolan/bv2425ObjectDetection/ShapeModel/Training/Datasets/valid/images # the location of the validation images !DO NOT CHANGE!
 #test: /home/ubuntu/data/test/images # the location of the testing images !DO NOT CHANGE!
 
 nc: 16 # the number of different objects to be trained on. Basically the length of the array below
