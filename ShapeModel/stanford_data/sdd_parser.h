@@ -4,6 +4,6 @@
 #include <string>
 
 void process_video(const std::string& video_path, const std::string& text_path,
-                  const std::vector<std::string>& output_dirs, float split);
+                  const std::vector<std::string>& output_dirs, float split, int frame_interval);
 
 #endif

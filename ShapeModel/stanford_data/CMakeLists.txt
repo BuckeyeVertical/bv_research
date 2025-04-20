@@ -16,4 +16,5 @@ set(SOURCE_FILES
 
 # Add executable
 add_executable(data_builder ${SOURCE_FILES})
+#add_executable(organize reorganize_sdd.cpp)
 target_link_libraries(data_builder ${OpenCV_LIBS})

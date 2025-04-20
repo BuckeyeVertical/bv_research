@@ -3,7 +3,7 @@
 
 #include <string>
 
-void create_dataset(const std::string& annotation_file, const std::string& video_file, 
-                    const std::string& dataset_dir, float train_ratio);
+void create_dataset(const std::string& dataset_dir, const std::string& output_dir, 
+                    float train_ratio, int frame_interval);
 
 #endif

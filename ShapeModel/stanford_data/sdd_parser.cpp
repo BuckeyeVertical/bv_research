@@ -117,7 +117,7 @@ static void save_frame_image(const cv::Mat& frame, int frameNumber,
 
 // Main function to process video and save annotations and images for frames in hashtable
 void process_video(const std::string& video_path, const std::string& text_path,
-                  const std::vector<std::string>& output_dirs, float split) {
+                  const std::vector<std::string>& output_dirs, float split, int frame_interval) {
     // Validate output_dirs size
     if (output_dirs.size() != 4) {
         std::cerr << "Error: output_dirs must contain exactly 4 paths (train_img, train_label, val_img, val_label)" << std::endl;
@@ -134,7 +134,7 @@ void process_video(const std::string& video_path, const std::string& text_path,
     auto hashtable = parse_annotations(text_path);
     
     // Get base filename without extension for both annotation files and images
-    std::string baseFilename = getBaseFilename(text_path);
+    //std::string baseFilename = getBaseFilename(text_path);
     std::string videoBaseName = getBaseFilename(video_path);
     
     // Open the video file
@@ -165,7 +165,7 @@ void process_video(const std::string& video_path, const std::string& text_path,
         
         // Check if the current frame number exists in the hashtable
         auto it = hashtable.find(frame_count);
-        if (it != hashtable.end()) {
+        if (it != hashtable.end() && frame_count % frame_interval == 0) {
             // Determine if this frame goes to training or validation set
             bool is_train = (dis(gen) < split);
             
@@ -174,7 +174,7 @@ void process_video(const std::string& video_path, const std::string& text_path,
             const std::string& label_dir = is_train ? train_label_dir : val_label_dir;
             
             // Save annotation file in appropriate directory
-            save_annotation_file(frame_count, it->second, baseFilename, label_dir);
+            save_annotation_file(frame_count, it->second, videoBaseName, label_dir);
             
             // Save frame image in appropriate directory
             save_frame_image(frame, frame_count, videoBaseName, img_dir);
