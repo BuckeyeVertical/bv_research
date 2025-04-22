@@ -18,7 +18,7 @@ with open(args.config, 'r') as f:
 model = YOLO(config.get("model_path", "yolo11m.pt"))
 
 # Load wandb
-wandb.login(key="02749026cc907752ec1bca72657afdfaa6c28af6") # Input key on cluster
+wandb.login(key='hi') # Input key on cluster
 
 # Extract training parameters from config
 exp_name = config["name"]
