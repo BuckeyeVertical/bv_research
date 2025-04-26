@@ -17,4 +17,5 @@ vcpkg_installed/
 *.png
 CMakePresets.json
 $ImageStitching/
-
+videos/
+models/
