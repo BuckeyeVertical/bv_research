@@ -7,7 +7,7 @@ from rfdetr.util.coco_classes import COCO_CLASSES
 
 model = RFDETRLarge(resolution=3808)
 
-image = Image.open("/home/eashan/workspace/bv2425ObjectDetection/data/b_50_frames/frame_000960.jpg")
+image = Image.open("data/b_50_frames/frame_000960.jpg")
 image = image.resize((3808, 3808), Image.BILINEAR)
 image = image.convert("RGB")
 detections = model.predict(image, threshold=0.5)
