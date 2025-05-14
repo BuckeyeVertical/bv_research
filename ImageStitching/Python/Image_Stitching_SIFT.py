@@ -3,7 +3,7 @@ import numpy as np
 from imutils import paths
 
 # Directory containing images in the correct order
-images_path = "ImageStitching/Python/images/runway"
+images_path = "data/stitching_test"
 output_path = "ImageStitching/Python/output/stitchedNew.jpg"
 
 # Options
