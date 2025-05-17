@@ -105,23 +105,13 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
     
     # Combine all detections
     if all_detections:
-        combined_detections = sv.Detections.merge(all_detections)
-        
-        # Apply NMS to remove duplicate detections
-        nms_detections = sv.box_utils.non_max_suppression(
-            boxes=combined_detections.xyxy,
-            scores=combined_detections.confidence,
-            iou_threshold=0.45,  # Adjust as needed
-            class_ids=combined_detections.class_id
-        )
-        
-        return sv.Detections(
-            xyxy=nms_detections[0],
-            confidence=nms_detections[1],
-            class_id=nms_detections[2]
-        )
+        combined = sv.Detections.merge(all_detections)
+
+        # Apply NMS in-place and return it
+        # iou_threshold defaults to 0.5 if you omit it
+        final_detections = combined.with_nms(iou_threshold=0.45)
+        return final_detections
     else:
-        # Return empty detections if no objects found
         return sv.Detections.empty()
 
 model = RFDETRLarge(resolution=728)
