@@ -29,7 +29,7 @@ def letterbox_image(img: Image.Image, target_size: int, fill_color=(114,114,114)
 
 model = RFDETRLarge(resolution=3808)
 
-image = Image.open("data/b_50_frames/frame_000960.jpg").convert("RGB")
+image = Image.open("data/b_50_frames/frame_000960.jpg")
 image = letterbox_image(image, target_size=3808)
 detections = model.predict(image, threshold=0.5)
 
