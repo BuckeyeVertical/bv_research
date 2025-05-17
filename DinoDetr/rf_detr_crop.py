@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from rfdetr import RFDETRLarge
 from rfdetr.util.coco_classes import COCO_CLASSES
+from tqdm import tqdm
 
 def letterbox_image(img: Image.Image, target_size: int, fill_color=(114,114,114)):
     """
@@ -82,8 +83,8 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
     
     all_detections = []
     
-    # Process each tile
-    for tile, (x_offset, y_offset) in tiles_with_positions:
+    # Process each tile with progress bar
+    for tile, (x_offset, y_offset) in tqdm(tiles_with_positions, desc="Processing tiles"):
         # Run model on tile
         tile_detections = model.predict(tile, threshold=threshold)
         
