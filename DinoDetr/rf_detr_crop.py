@@ -124,9 +124,12 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
         # Return empty detections if no objects found
         return sv.Detections.empty()
 
-model = RFDETRLarge(resolution=3808)
+model = RFDETRLarge(resolution=728)
 
-image = Image.open("data/b_50_frames/frame_000960.jpg").convert("RGB")
+
+# image = Image.open("data/b_50_frames/frame_000960.jpg").convert("RGB")
+url = "https://media.roboflow.com/notebooks/examples/dog-2.jpeg"
+image = Image.open(io.BytesIO(requests.get(url).content))
 # Remove the undefined crop variable check
 # Process with tiling directly
 detections = process_image_with_tiles(model, image, tile_size=728, overlap=200, threshold=0.5)
