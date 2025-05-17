@@ -134,4 +134,5 @@ annotated_image = image.copy()
 annotated_image = sv.BoxAnnotator().annotate(annotated_image, detections)
 annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections, labels)
 
+annotated_image.save("output.jpg")
 sv.plot_image(annotated_image)
