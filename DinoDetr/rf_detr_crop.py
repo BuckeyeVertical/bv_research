@@ -109,7 +109,7 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
 
         # Apply NMS in-place and return it
         # iou_threshold defaults to 0.5 if you omit it
-        final_detections = combined.with_nms(iou_threshold=0.45)
+        final_detections = combined.with_nms(threshold=0.45)
         return final_detections
     else:
         return sv.Detections.empty()
