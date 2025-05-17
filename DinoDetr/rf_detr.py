@@ -29,8 +29,12 @@ def letterbox_image(img: Image.Image, target_size: int, fill_color=(114,114,114)
 
 model = RFDETRLarge(resolution=3808)
 
-image = Image.open("data/b_50_frames/frame_000960.jpg").convert("RGB")
-image = letterbox_image(image, target_size=3808)
+url = "https://media.roboflow.com/notebooks/examples/dog-2.jpeg"
+
+image = Image.open(io.BytesIO(requests.get(url).content))
+
+# image = Image.open("data/b_50_frames/frame_000960.jpg").convert("RGB")
+# image = letterbox_image(image, target_size=3808)
 detections = model.predict(image, threshold=0.5)
 
 labels = [
