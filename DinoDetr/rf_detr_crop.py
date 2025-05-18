@@ -1,4 +1,6 @@
 import io
+import os
+import glob
 import requests
 import supervision as sv
 import numpy as np
@@ -114,25 +116,98 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
     else:
         return sv.Detections.empty()
 
+def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, threshold=0.5):
+    """
+    Process all images in a directory.
+    
+    Args:
+        input_dir: Directory containing input images
+        output_dir: Directory to save annotated images
+        model: Model to use for detection
+        tile_size: Size of tiles
+        overlap: Overlap between tiles
+        threshold: Detection confidence threshold
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Get list of image files
+    image_extensions = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tiff']
+    image_files = []
+    for ext in image_extensions:
+        image_files.extend(glob.glob(os.path.join(input_dir, ext)))
+    
+    print(f"Found {len(image_files)} images to process")
+    
+    # Process each image
+    for img_path in tqdm(image_files, desc="Processing images"):
+        # Get filename without path and extension
+        filename = os.path.basename(img_path)
+        base_filename, _ = os.path.splitext(filename)
+        
+        # Load image
+        image = Image.open(img_path).convert("RGB")
+        
+        # Process image
+        detections = process_image_with_tiles(model, image, tile_size=tile_size, 
+                                             overlap=overlap, threshold=threshold)
+        
+        # Create labels
+        labels = [
+            f"{COCO_CLASSES[class_id]} {confidence:.2f}"
+            for class_id, confidence
+            in zip(detections.class_id, detections.confidence)
+        ]
+        
+        # Annotate image
+        annotated_image = image.copy()
+        annotated_image = sv.BoxAnnotator().annotate(annotated_image, detections)
+        annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections, labels)
+        
+        # Save annotated image
+        output_path = os.path.join(output_dir, f"{base_filename}_annotated.jpg")
+        annotated_image.save(output_path)
+        
+    print(f"All images processed and saved to {output_dir}")
+
+# Initialize the model
 model = RFDETRLarge(resolution=728)
 
+# Option 1: Process a single image (original code)
+def process_single_image():
+    image = Image.open("data/b_50_frames/frame_000960.jpg")
+    detections = process_image_with_tiles(model, image, tile_size=728, overlap=200, threshold=0.5)
+    
+    labels = [
+        f"{COCO_CLASSES[class_id]} {confidence:.2f}"
+        for class_id, confidence
+        in zip(detections.class_id, detections.confidence)
+    ]
+    
+    annotated_image = image.copy()
+    annotated_image = sv.BoxAnnotator().annotate(annotated_image, detections)
+    annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections, labels)
+    
+    annotated_image.save("output.jpg")
+    sv.plot_image(annotated_image)
 
-image = Image.open("data/b_50_frames/frame_000960.jpg")
-# url = "https://media.roboflow.com/notebooks/examples/dog-2.jpeg"
-# image = Image.open(io.BytesIO(requests.get(url).content))
-# Remove the undefined crop variable check
-# Process with tiling directly
-detections = process_image_with_tiles(model, image, tile_size=728, overlap=200, threshold=0.5)
-
-labels = [
-    f"{COCO_CLASSES[class_id]} {confidence:.2f}"
-    for class_id, confidence
-    in zip(detections.class_id, detections.confidence)
-]
-
-annotated_image = image.copy()
-annotated_image = sv.BoxAnnotator().annotate(annotated_image, detections)
-annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections, labels)
-
-annotated_image.save("output.jpg")
-sv.plot_image(annotated_image)
+# Option 2: Process all images in a directory
+if __name__ == "__main__":
+    import sys
+    
+    # Default directories
+    input_dir = "data/b_50_frames"
+    output_dir = "output"
+    
+    # Parse command-line arguments if provided
+    if len(sys.argv) > 1:
+        input_dir = sys.argv[1]
+    if len(sys.argv) > 2:
+        output_dir = sys.argv[2]
+    
+    # Process the directory of images
+    print(f"Processing all images in {input_dir}")
+    process_directory(input_dir, output_dir, model)
+    
+    # Uncomment to process a single image instead
+    # process_single_image()
