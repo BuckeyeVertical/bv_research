@@ -121,7 +121,6 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
         return sv.Detections.empty()
     
 def process_image_with_tiles_batched(
-    model,
     image,
     tile_size: int = 728,
     overlap: int = 100,
@@ -134,6 +133,8 @@ def process_image_with_tiles_batched(
     # 1) Tile the image and unzip into lists of tiles + offsets
     tiles_with_positions = create_tiles(image, tile_size, overlap)
     tiles, offsets = zip(*tiles_with_positions)
+
+    model = create_model(len(tiles))
 
     # 2) Batch inference: RF-DETR accepts a list of PIL/np images
     detections_list = model.predict(list(tiles), threshold=threshold)  # List[sv.Detections]
@@ -194,7 +195,7 @@ def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, 
         image = Image.open(img_path).convert("RGB")
         
         # Process image
-        detections = process_image_with_tiles_batched(model, image, tile_size=tile_size, 
+        detections = process_image_with_tiles_batched(image, tile_size=tile_size, 
                                              overlap=overlap, threshold=threshold)
         
         # Create labels
@@ -215,33 +216,17 @@ def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, 
         
     print(f"All images processed and saved to {output_dir}")
 
-# Initialize the model
-print("Empty cache")
-torch.cuda.empty_cache()
-print("Loading model")
-model = RFDETRLarge(resolution=728)
+def create_model(batch_size=1, resolution=728, dtype=torch.float32):
+    # Initialize the model
+    print("Empty cache")
+    torch.cuda.empty_cache()
+    print("Loading model")
+    model = RFDETRLarge(resolution=resolution)
 
-print("Optimizing for inference")
-model.optimize_for_inference()
-print("Completed Optimization")
-
-# Option 1: Process a single image (original code)
-def process_single_image():
-    image = Image.open("data/b_50_frames/frame_000720.jpg")
-    detections = process_image_with_tiles(model, image, tile_size=728, overlap=200, threshold=0.5)
-    
-    labels = [
-        f"{COCO_CLASSES[class_id]} {confidence:.2f}"
-        for class_id, confidence
-        in zip(detections.class_id, detections.confidence)
-    ]
-    
-    annotated_image = image.copy()
-    annotated_image = sv.BoxAnnotator().annotate(annotated_image, detections)
-    annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections, labels)
-    
-    annotated_image.save("output.jpg")
-    sv.plot_image(annotated_image)
+    print("Optimizing for inference")
+    model.optimize_for_inference(batch_size=batch_size, dtype=dtype)
+    print("Completed Optimization")
+    return model
 
 # Option 2: Process all images in a directory
 if __name__ == "__main__":
@@ -259,7 +244,7 @@ if __name__ == "__main__":
     
     # Process the directory of images
     print(f"Processing all images in {input_dir}")
-    process_directory(input_dir, output_dir, model)
+    process_directory(input_dir, output_dir)
     
     # Uncomment to process a single image instead
     # process_single_image()
