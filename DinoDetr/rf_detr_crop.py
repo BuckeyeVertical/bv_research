@@ -248,8 +248,8 @@ if __name__ == "__main__":
     import sys
     
     # Default directories
-    input_dir = "data/c_e_28_frames"
-    output_dir = "output/c_e_28"
+    input_dir = "data/b_50_frames"
+    output_dir = "output/b_50"
     
     # Parse command-line arguments if provided
     if len(sys.argv) > 1:
