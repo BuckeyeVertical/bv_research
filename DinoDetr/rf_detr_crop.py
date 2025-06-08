@@ -222,7 +222,7 @@ print("Loading model")
 model = RFDETRLarge(resolution=728)
 
 print("Optimizing for inference")
-model = model.optimize_for_inference()
+model.optimize_for_inference()
 print("Completed Optimization")
 
 # Option 1: Process a single image (original code)
