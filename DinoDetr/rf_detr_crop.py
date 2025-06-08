@@ -194,7 +194,7 @@ def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, 
         image = Image.open(img_path).convert("RGB")
         
         # Process image
-        detections = process_image_with_tiles_parallel(model, image, tile_size=tile_size, 
+        detections = process_image_with_tiles_batched(model, image, tile_size=tile_size, 
                                              overlap=overlap, threshold=threshold)
         
         # Create labels
