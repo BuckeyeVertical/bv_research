@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/Users/seanbrod16/repos/bv2425ObjectDetection/ImageStitching/C++"
+    "cmake.sourceDirectory": "/Users/seanbrod16/repos/bv2425ObjectDetection/ImageStitching/C++",
+    "ros.distro": "humble"
 }

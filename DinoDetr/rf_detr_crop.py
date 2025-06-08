@@ -8,6 +8,10 @@ from PIL import Image
 from rfdetr import RFDETRLarge
 from rfdetr.util.coco_classes import COCO_CLASSES
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+import torch
+from torchvision import transforms
 
 def letterbox_image(img: Image.Image, target_size: int, fill_color=(114,114,114)):
     """
@@ -115,6 +119,47 @@ def process_image_with_tiles(model, image, tile_size=728, overlap=100, threshold
         return final_detections
     else:
         return sv.Detections.empty()
+    
+def process_image_with_tiles_batched(
+    model,
+    image,
+    tile_size: int = 728,
+    overlap: int = 100,
+    threshold: float = 0.5
+):
+    """
+    Process an image by tiling, using RF-DETR's batch API for inference,
+    then combine results and apply global NMS.
+    """
+    # 1) Tile the image and unzip into lists of tiles + offsets
+    tiles_with_positions = create_tiles(image, tile_size, overlap)
+    tiles, offsets = zip(*tiles_with_positions)
+
+    # 2) Batch inference: RF-DETR accepts a list of PIL/np images
+    detections_list = model.predict(list(tiles), threshold=threshold)  # List[sv.Detections]
+
+    # 3) Adjust boxes back to full-image coords
+    all_dets = []
+    for dets, (x_off, y_off) in zip(detections_list, offsets):
+        if len(dets.xyxy) == 0:
+            continue
+
+        boxes = dets.xyxy.copy()               # NumPy array copy
+        boxes[:, [0, 2]] += x_off              # x_min, x_max
+        boxes[:, [1, 3]] += y_off              # y_min, y_max
+
+        all_dets.append(sv.Detections(
+            xyxy=boxes,
+            confidence=dets.confidence,
+            class_id=dets.class_id
+        ))
+
+    # 4) Merge & run global NMS
+    if not all_dets:
+        return sv.Detections.empty()
+
+    merged = sv.Detections.merge(all_dets)
+    return merged.with_nms(threshold=0.45)
 
 def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, threshold=0.5):
     """
@@ -149,7 +194,7 @@ def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, 
         image = Image.open(img_path).convert("RGB")
         
         # Process image
-        detections = process_image_with_tiles(model, image, tile_size=tile_size, 
+        detections = process_image_with_tiles_parallel(model, image, tile_size=tile_size, 
                                              overlap=overlap, threshold=threshold)
         
         # Create labels
@@ -171,11 +216,13 @@ def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, 
     print(f"All images processed and saved to {output_dir}")
 
 # Initialize the model
+torch.cuda.empty_cache()
 model = RFDETRLarge(resolution=728)
+model = model.optimize_for_inference()
 
 # Option 1: Process a single image (original code)
 def process_single_image():
-    image = Image.open("data/b_50_frames/frame_000960.jpg")
+    image = Image.open("data/b_50_frames/frame_000720.jpg")
     detections = process_image_with_tiles(model, image, tile_size=728, overlap=200, threshold=0.5)
     
     labels = [
@@ -196,8 +243,8 @@ if __name__ == "__main__":
     import sys
     
     # Default directories
-    input_dir = "data/b_50_frames"
-    output_dir = "output"
+    input_dir = "data/c_e_28_frames"
+    output_dir = "output/c_e_28"
     
     # Parse command-line arguments if provided
     if len(sys.argv) > 1:
