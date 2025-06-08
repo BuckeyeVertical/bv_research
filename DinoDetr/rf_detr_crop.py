@@ -216,9 +216,14 @@ def process_directory(input_dir, output_dir, model, tile_size=728, overlap=200, 
     print(f"All images processed and saved to {output_dir}")
 
 # Initialize the model
+print("Empty cache")
 torch.cuda.empty_cache()
+print("Loading model")
 model = RFDETRLarge(resolution=728)
+
+print("Optimizing for inference")
 model = model.optimize_for_inference()
+print("Completed Optimization")
 
 # Option 1: Process a single image (original code)
 def process_single_image():
