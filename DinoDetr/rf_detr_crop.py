@@ -17,6 +17,7 @@ class Detector():
     def __init__(self):
         self.num_tiles = None
         self.model = None
+        self.batch_size = 8
 
     def letterbox_image(self, img: Image.Image, target_size: int, fill_color=(114,114,114)):
         """
@@ -144,8 +145,10 @@ class Detector():
             print("Creating model")
             self.model = self.create_model()
 
-        # 2) Batch inference: RF-DETR accepts a list of PIL/np images
-        detections_list = self.model.predict(list(tiles), threshold=threshold)  # List[sv.Detections]
+        detections_list = []
+
+        for i in range(0, len(tiles), self.batch_size):
+            detections_list.extend(self.model.predict(list(tiles[i:i + self.batch_size]), threshold=threshold))
 
         # 3) Adjust boxes back to full-image coords
         all_dets = []
@@ -221,7 +224,7 @@ class Detector():
         model = RFDETRLarge(resolution=resolution)
 
         print("Optimizing for inference")
-        # model.optimize_for_inference(batch_size=batch_size, dtype=dtype)
+        # model.optimize_for_inference(batch_size=self.batch_size, dtype=dtype)
         print("Completed Optimization")
         return model
 
