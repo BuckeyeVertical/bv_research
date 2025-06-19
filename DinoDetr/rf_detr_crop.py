@@ -134,11 +134,11 @@ class Detector():
     
     def annotate_frame(self, frame, detections, class_names=COCO_CLASSES):
         """
-        Annotate `frame` with bounding boxes and per-detection labels.
+        Annotate `frame` with bounding boxes and per-detection labels + confidence.
 
         Args:
             frame: H×W×C NumPy array
-            detections: sv.Detections object containing `xyxy`, `class_id`, etc.
+            detections: sv.Detections object containing `xyxy`, `class_id`, `confidence`, etc.
             class_names: list of class names (e.g. COCO_CLASSES)
 
         Returns:
@@ -147,9 +147,9 @@ class Detector():
         annotated_frame = frame.copy()
         # Draw bounding boxes
         annotated_frame = sv.BoxAnnotator().annotate(annotated_frame, detections)
-        # Prepare one label per detection
-        labels = [class_names[c] for c in detections.class_id]
-        # Draw class labels
+        # Prepare labels like 'class 0.85'
+        labels = [f"{class_names[c]} {conf:.2f}" for c, conf in zip(detections.class_id, detections.confidence)]
+        # Draw class labels with confidence
         annotated_frame = sv.LabelAnnotator().annotate(annotated_frame, detections, labels)
         return annotated_frame
 
