@@ -5,7 +5,7 @@ import requests
 import supervision as sv
 import numpy as np
 from PIL import Image
-from rfdetr import RFDETRLarge
+from rfdetr import RFDETRBase
 from rfdetr.util.coco_classes import COCO_CLASSES
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,34 +14,13 @@ import torch
 from torchvision import transforms
 
 class Detector():
-    def __init__(self):
-        self.num_tiles = None
-        self.model = None
-        self.batch_size = 8
+    def __init__(self, batch_size=4, resolution=728):
+        self.batch_size = batch_size
+        self.resolution = resolution
+        self.model = self.create_model()
+        self.frame_save_cnt = 0
 
-    def letterbox_image(self, img: Image.Image, target_size: int, fill_color=(114,114,114)):
-        """
-        Resize an image to fit within a square of size (target_size x target_size) 
-        without changing aspect ratio, then pad the rest with `fill_color`.
-        """
-        w, h = img.size
-        scale = target_size / max(w, h)
-        new_w, new_h = int(w * scale), int(h * scale)
-        
-        # 1) Resize with preserved aspect ratio
-        img_resized = img.resize((new_w, new_h), Image.BILINEAR)
-        
-        # 2) Create padded canvas
-        canvas = Image.new("RGB", (target_size, target_size), fill_color)
-        
-        # 3) Paste resized image centered
-        top = (target_size - new_h) // 2
-        left = (target_size - new_w) // 2
-        canvas.paste(img_resized, (left, top))
-        
-        return canvas
-
-    def create_tiles(self, image, tile_size=728, overlap=100):
+    def create_tiles(self, image, overlap=100):
         """
         Split an image into tiles with overlap.
         
@@ -54,7 +33,8 @@ class Detector():
             List of (tile, (x_offset, y_offset)) where tile is a PIL Image and
             (x_offset, y_offset) is the position of the tile in the original image
         """
-        width, height = image.size
+        tile_size = self.resolution
+        width, height = image.shape[1], image.shape[0]
         tiles = []
         
         # Calculate positions where tiles should start
@@ -80,65 +60,42 @@ class Detector():
                 y_start = max(0, y_end - tile_size)
                 
                 # Extract tile
-                tile = image.crop((x_start, y_start, x_end, y_end))
+                tile = image[y_start:y_end, x_start:x_end, :]
                 tiles.append((tile, (x_start, y_start)))
         
         return tiles
 
-    def process_image_with_tiles(self, model, image, tile_size=728, overlap=100, threshold=0.5):
-        """
-        Process an image by tiling it and running the model on each tile.
-        Then combine the results and apply NMS.
-        """
-        # Create tiles
-        tiles_with_positions = self.create_tiles(image, tile_size, overlap)
-        
-        all_detections = []
-        
-        # Process each tile with progress bar
-        for tile, (x_offset, y_offset) in tqdm(tiles_with_positions, desc="Processing tiles"):
-            # Run model on tile
-            tile_detections = model.predict(tile, threshold=threshold)
-            
-            if len(tile_detections.xyxy) > 0:
-                # Adjust bounding box coordinates to the original image
-                adjusted_boxes = tile_detections.xyxy.copy()
-                adjusted_boxes[:, 0] += x_offset  # x_min
-                adjusted_boxes[:, 1] += y_offset  # y_min
-                adjusted_boxes[:, 2] += x_offset  # x_max
-                adjusted_boxes[:, 3] += y_offset  # y_max
-                
-                # Append to all detections
-                all_detections.append(sv.Detections(
-                    xyxy=adjusted_boxes,
-                    confidence=tile_detections.confidence,
-                    class_id=tile_detections.class_id
-                ))
-        
-        # Combine all detections
-        if all_detections:
-            combined = sv.Detections.merge(all_detections)
+    def pad_and_predict(self, tiles, threshold):
+        # tiles: list of H×W×C numpy arrays (or torch tensors)
+        # model.predict wants exactly `batch_size` inputs.
 
-            # Apply NMS in-place and return it
-            # iou_threshold defaults to 0.5 if you omit it
-            final_detections = combined.with_nms(threshold=0.45)
-            return final_detections
+        # 1) prepare batch
+        B = len(tiles)
+        if B < self.batch_size:
+            # assume tiles[0] exists; make dummy using its shape
+            dummy = np.zeros_like(tiles[0])
+            tiles = tiles + [dummy] * (self.batch_size - B)
+            trim_to = B
         else:
-            return sv.Detections.empty()
-        
-    def process_image_with_tiles_batched(
-        self,
-        image,
-        tile_size: int = 728,
-        overlap: int = 100,
-        threshold: float = 0.5
-    ):
+            trim_to = None
+
+        # 2) run inference
+        outputs = self.model.predict(tiles, threshold=threshold)
+
+        # 3) if we padded, slice off the extra outputs
+        if trim_to is not None:
+            # assume outputs is a list of detections per‐tile
+            outputs = outputs[:trim_to]
+
+        return outputs
+
+    def process_frame(self, frame, overlap: int = 100, threshold: float = 0.5):
         """
         Process an image by tiling, using RF-DETR's batch API for inference,
         then combine results and apply global NMS.
         """
         # 1) Tile the image and unzip into lists of tiles + offsets
-        tiles_with_positions = self.create_tiles(image, tile_size, overlap)
+        tiles_with_positions = self.create_tiles(frame, overlap)
         tiles, offsets = zip(*tiles_with_positions)
 
         if self.model == None:
@@ -148,7 +105,9 @@ class Detector():
         detections_list = []
 
         for i in range(0, len(tiles), self.batch_size):
-            detections_list.extend(self.model.predict(list(tiles[i:i + self.batch_size]), threshold=threshold))
+            batch = list(tiles[i:i + self.batch_size])
+            dets = self.pad_and_predict(batch, threshold)
+            detections_list.extend(dets)
 
         # 3) Adjust boxes back to full-image coords
         all_dets = []
@@ -172,69 +131,83 @@ class Detector():
 
         merged = sv.Detections.merge(all_dets)
         return merged.with_nms(threshold=0.45)
+    
+    def annotate_frame(self, frame, detections, class_names=COCO_CLASSES):
+        """
+        Annotate `frame` with bounding boxes and per-detection labels.
 
-    def process_directory(self, input_dir, output_dir, tile_size=728, overlap=200, threshold=0.5):
-        # Create output directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Get list of image files
-        image_extensions = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tiff']
-        image_files = []
-        for ext in image_extensions:
-            image_files.extend(glob.glob(os.path.join(input_dir, ext)))
-        
-        print(f"Found {len(image_files)} images to process")
-        
-        # Process each image
-        for img_path in tqdm(image_files, desc="Processing images"):
-            # Get filename without path and extension
-            filename = os.path.basename(img_path)
-            base_filename, _ = os.path.splitext(filename)
-            
-            # Load image
-            image = Image.open(img_path).convert("RGB")
-            
-            # Process image
-            detections = self.process_image_with_tiles_batched(image, tile_size=tile_size, 
-                                                overlap=overlap, threshold=threshold)
-            
-            # Create labels
-            labels = [
-                f"{COCO_CLASSES[class_id]} {confidence:.2f}"
-                for class_id, confidence
-                in zip(detections.class_id, detections.confidence)
-            ]
-            
-            # Annotate image
-            annotated_image = image.copy()
-            annotated_image = sv.BoxAnnotator().annotate(annotated_image, detections)
-            annotated_image = sv.LabelAnnotator().annotate(annotated_image, detections, labels)
-            
-            # Save annotated image
-            output_path = os.path.join(output_dir, f"{base_filename}_annotated.jpg")
-            annotated_image.save(output_path)
-            
-        print(f"All images processed and saved to {output_dir}")
+        Args:
+            frame: H×W×C NumPy array
+            detections: sv.Detections object containing `xyxy`, `class_id`, etc.
+            class_names: list of class names (e.g. COCO_CLASSES)
 
-    def create_model(self, batch_size=1, resolution=728, dtype=torch.float32):
+        Returns:
+            Annotated image as NumPy array
+        """
+        annotated_frame = frame.copy()
+        # Draw bounding boxes
+        annotated_frame = sv.BoxAnnotator().annotate(annotated_frame, detections)
+        # Prepare one label per detection
+        labels = [class_names[c] for c in detections.class_id]
+        # Draw class labels
+        annotated_frame = sv.LabelAnnotator().annotate(annotated_frame, detections, labels)
+        return annotated_frame
+
+    def save_frame(self, frame, output_dir):
+        output_path = os.path.join(output_dir, f"{self.frame_save_cnt}_annotated.jpg")
+        Image.fromarray(frame).save(output_path)
+        self.frame_save_cnt += 1
+
+    def create_model(self, dtype=torch.float16):
         # Initialize the model
-        print("Empty cache")
         torch.cuda.empty_cache()
-        print("Loading model")
-        model = RFDETRLarge(resolution=resolution)
+        model = RFDETRBase(resolution=self.resolution)
 
-        print("Optimizing for inference")
-        # model.optimize_for_inference(batch_size=self.batch_size, dtype=dtype)
-        print("Completed Optimization")
+        model.optimize_for_inference(batch_size=self.batch_size, dtype=dtype)
+
+        print(f"Model created with batch size: {self.batch_size}")
+
         return model
+    
+    def process_directory(self, input_dir, output_dir,
+                           overlap: int = 100,
+                           threshold: float = 0.5,
+                           labels=COCO_CLASSES):
+        """
+        Process all images in `input_dir`, save annotated outputs to `output_dir`.
+        Supports .jpg, .jpeg, .png files and shows a progress bar.
+        """
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Gather image file paths
+        patterns = ("*.jpg", "*.jpeg", "*.png")
+        image_paths = []
+        for pat in patterns:
+            image_paths.extend(glob.glob(os.path.join(input_dir, pat)))
+        image_paths.sort()
+
+        # Process each image
+        for img_path in tqdm(image_paths, desc="Processing images"):
+            # Load and convert to NumPy array
+            pil_img = Image.open(img_path).convert("RGB")
+            frame = np.array(pil_img)
+
+            # Run detection
+            detections = self.process_frame(frame, overlap, threshold)
+
+            # Annotate
+            annotated = self.annotate_frame(frame, detections, labels)
+
+            # Save result
+            self.save_frame(annotated, output_dir)
 
 # Option 2: Process all images in a directory
 if __name__ == "__main__":
     import sys
     
     # Default directories
-    input_dir = "data/b_50_frames"
-    output_dir = "output/b_50"
+    input_dir = "data/b_70_frames"
+    output_dir = "output/b_70"
     
     # Parse command-line arguments if provided
     if len(sys.argv) > 1:
