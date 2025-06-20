@@ -1,0 +1,57 @@
+Generated with: https://calib.io/pages/camera-calibration-pattern-generator?srsltid=AfmBOopxS31SvRdr6Ik65z1y-3VHZaeG4JL-nlu4NH8r9JbVBul1856Y
+
+Config Used:
+board_width = 1100
+board_height = 850
+rows = 6
+cols = 8
+checker_width = 125
+Dictionary = DICT_5x5
+Start ID = 0
+
+# Camera Calibration Instructions
+
+Please follow the instructions below for capturing images for camera calibration.
+
+**Charuco board**: [Download PDF](calib.io_charuco_1100x850_6x8_125_93_DICT_5X5.pdf)
+
+## 1. Setup
+
+- **Board:** 36″×48″ Charuco (8×6 squares of 125 mm, 100 mm margin) mounted flat on rigid backing  
+- **Camera:** locked focus, fixed exposure/white-balance; mounted on tripod or steady stand  
+- **Lighting:** diffuse, even (overcast sky or softbox)  
+
+## 2. Distance Bands & Shot Counts
+
+| Band  | Distance | # Images | Notes                                                                            |
+|-------|----------|----------|----------------------------------------------------------------------------------|
+| Close | 1–2 m    | 10       | “Big” board fills most of frame; pick 4 centered, 4 shifted toward each corner. |
+| Mid   | 5–10 m   | 10       | Board ~¼–½ frame height; pan/tilt so board corners hit each image corner once.   |
+| Far   | 15–20 m  | 15       | Board small in frame; capture partial-view Charuco corners at each edge & tilt.  |
+| **Total** |      | **35**   |                                                                                  |
+
+## 3. Per-Image Guidelines
+
+- **Frame position**  
+  - Center once  
+  - Shift up, down, left, right so corners approach each image corner  
+
+- **Orientation**  
+  - Level (grid axes parallel to sensor)  
+  - Tilt forward/back (pitch)  
+  - Tilt left/right (roll)  
+  - Rotate about normal (~30° yaw)  
+
+- **Sharpness check**  
+  - Zoom in on your LCD/preview; ensure sub-pixel corner clarity  
+
+- **Logging**  
+  - Jot down distance and pose (e.g. “mid-left+roll”, “far-top-right+pitch”) for traceability  
+
+## 4. Verifying
+
+1. Save all calibration images in `data/calibration/*.jpg` under your `bv2425ObjectDetection` workspace  
+2. Run:
+   ```bash
+   python calibration/aruco_calib.py
+3. Verify that the mean reprojection error is < 0.2px
