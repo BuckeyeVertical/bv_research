@@ -7,19 +7,19 @@ import glob
 import os
 
 # --- Board Definition ---
-CHARUCOBOARD_ROWCOUNT = 6
-CHARUCOBOARD_COLCOUNT = 8
+CHARUCOBOARD_ROWCOUNT = 3
+CHARUCOBOARD_COLCOUNT = 4
 # This dictionary seems to be working, so we'll stick with it.
-ARUCO_DICT = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
+ARUCO_DICT = aruco.getPredefinedDictionary(aruco.DICT_5X5_50)
 
 # --- VERY IMPORTANT ---
 # Please double-check these values on the pattern generator website.
 # The ratio between them is critical for corner interpolation.
-SQUARE_LENGTH_METERS = 0.125  # 125mm
-MARKER_LENGTH_METERS = 0.093  # 93mm
+SQUARE_LENGTH_METERS = 0.13329
+MARKER_LENGTH_METERS = 0.09914
 
 CHARUCO_BOARD = aruco.CharucoBoard(
-        size=(CHARUCOBOARD_COLCOUNT, CHARUCOBOARD_ROWCOUNT),
+        size=(CHARUCOBOARD_ROWCOUNT, CHARUCOBOARD_COLCOUNT),
         squareLength=SQUARE_LENGTH_METERS,
         markerLength=MARKER_LENGTH_METERS,
         dictionary=ARUCO_DICT)
@@ -48,7 +48,7 @@ for iname in images:
     corners, ids, _ = aruco.detectMarkers(gray, ARUCO_DICT)
 
     if ids is not None and len(ids) > 0:
-        print(f"    -> Found {len(ids)} ArUco markers.")
+        print(f"    -> Found {len(corners)} ArUco markers.")
         # Draw detected markers for visualization
         aruco.drawDetectedMarkers(display_img, corners, ids)
         
@@ -71,7 +71,7 @@ for iname in images:
 
         # --- VISUALIZATION ---
         # Scale image for display and show it
-        scale_percent = 50 # Adjust scale if images are too large for your screen
+        scale_percent = 25 # Adjust scale if images are too large for your screen
         width = int(display_img.shape[1] * scale_percent / 100)
         height = int(display_img.shape[0] * scale_percent / 100)
         resized_img = cv2.resize(display_img, (width, height))
