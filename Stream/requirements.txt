@@ -1,0 +1,16 @@
+# Core computer vision and camera libraries
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional: For better video codec support
+opencv-contrib-python>=4.8.0
+
+# System and utility libraries
+argparse  # Usually included with Python, but listed for completeness
+
+# Optional: For advanced camera controls (Linux only)
+# v4l2-python3>=0.3.0
+
+# Optional: For GUI enhancements
+# matplotlib>=3.7.0
+# Pillow>=10.0.0
