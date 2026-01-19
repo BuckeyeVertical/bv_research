@@ -1,12 +1,10 @@
-from steps import io, generate_tents, remove_watermark, enhance_resolution
+from steps import io, generate_tents
 import argparse
 import os
 
 pipeline = [
     io.load,
     generate_tents.run,
-    remove_watermark.run,
-    enhance_resolution.run,
     io.save
 ]
 
@@ -27,9 +25,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     folder = args.folder
 
-    files = [
+    files = sorted([
         os.path.join(folder, f) for f in os.listdir(folder)
         if f.lower().endswith(ALLOWED_EXTENSIONS)
-    ]
+    ])
     for file in files:
-        run_pipeline(file)
+        try:
+            run_pipeline(file)
+        except ValueError:
+            print("p")

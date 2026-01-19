@@ -10,6 +10,9 @@ ShapeModel/Training/runs
 #Filtering
 .DS_Store
 venv/
+.env
+.venv/
+__pycache__
 *.pt
 build/
 vcpkg_installed/

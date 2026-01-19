@@ -1,14 +1,18 @@
 import cv2
 import os
+from PIL import Image
 
+class AlreadyProcessedError(Exception):
+    pass
 
 def load(file_path):
-    image = cv2.imread(file_path)
+    name = os.path.basename(file_path)
+    if os.path.exists(os.path.join("processed", name)):
+        raise ValueError("image already processed")
 
+    image = Image.open(file_path)
     if image is None:
         raise ValueError("path not valid")
-
-    name = os.path.basename(file_path)
 
     return {
         "name": name,
@@ -18,8 +22,9 @@ def load(file_path):
 
 def save(data):
     name = data["name"]
+    print(f"save {name}")
     image = data["image"]
     out_path = os.path.join("processed", name)
     os.makedirs("processed", exist_ok=True)
-    cv2.imwrite(out_path, image)
+    image.save(out_path)
     return out_path
