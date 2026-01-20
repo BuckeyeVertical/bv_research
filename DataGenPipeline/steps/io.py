@@ -5,20 +5,25 @@ from PIL import Image
 class AlreadyProcessedError(Exception):
     pass
 
-def load(file_path):
-    name = os.path.basename(file_path)
+def load(image_path, label_path):
+    name = os.path.basename(image_path)
     if os.path.exists(os.path.join("processed", name)):
         raise ValueError("image already processed")
-
-    image = Image.open(file_path)
+    
+    image = Image.open(image_path)
     if image is None:
         raise ValueError("path not valid")
 
+    with open(label_path, "r") as f:
+        label_content = f.read()
+    print(label_content)
+    print(image)
     return {
         "name": name,
-        "image": image
+        "image": image,
+        "label_content": label_content,
+        "mannequins": []
     }
-
 
 def save(data):
     name = data["name"]
