@@ -11,7 +11,7 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("API_KEY"))
 colors = ["red", "green", "blue", "tan", "orange", "grey", "white"]
-positions = ["top left", "top right", "center", "bottom left", "bottom right"]
+positions = ["top left", "top right", "center", "bottom left", "bottom right", "bottom", "left", "right", "top"]
 
 
 def run(data):
@@ -19,7 +19,7 @@ def run(data):
     color = random.choice(colors)
     position = random.choice(positions)
     # prompt = f"Add a realistic {color}, open, pop-up, camping tent to this image. Keep the lighting and style consistent."
-    prompt = f"Here is a top down, nadir view of a landscape from roughly 100 feet away. Add a very very small, realistic, {color}, open, pop-up, camping tent in the {position} of this image. Keep the lighting and style consistent. Do not place the tent over human like figures."
+    prompt = f"Here is a top down, nadir view of a landscape from roughly 100 feet away. Add a very very small, realistic, {color}, open, pop-up, camping tent around the {position} of this image. Keep the lighting and style consistent. Do not place the tent over human like figures."
     try:
         print(f"gen tent {color}, {position}")
         response = client.models.generate_content(
