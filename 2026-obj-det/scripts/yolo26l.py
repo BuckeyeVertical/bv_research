@@ -7,7 +7,7 @@ def main():
 
     # Train
     results = model.train(
-        data="/fs/scratch/PAS2152/tclute/bv/scripts/data.yaml",
+        data="data.yaml",
         epochs=100,
         imgsz=640,
         batch=16,

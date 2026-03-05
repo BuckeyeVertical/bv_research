@@ -10,7 +10,7 @@ os.environ["WORLD_SIZE"] = "1"
 model = RFDETRBase()
 
 model.train(
-    dataset_dir="./coco_dataset",
+    dataset_dir="/fs/scratch/PAS2152/tclute/bv/coco_dataset",
     epochs=75,
     batch_size=8,
     grad_accum_steps=4,
