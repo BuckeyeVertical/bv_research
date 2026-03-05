@@ -3,9 +3,27 @@ import sys
 import os
 import curses
 
+# --- SLURM defaults ---
+DEFAULTS = {
+    "time": "48:00:00",
+    "nodes": "1",
+    "ntasks_per_node": "1",
+    "gpus_per_node": "1",
+    "cpus_per_task": "8",
+    "mem": "64gb",
+    "account": "PAS2152",
+    "partition": "",
+    "cuda_module": "cuda/12.6.2",
+    "scripts_dir": "scripts",
+    "logs_dir": "logs",
+}
+
+# --- Active configuration (env vars override defaults) ---
+cfg = {k: os.getenv(k, v) for k, v in DEFAULTS.items()}
+
 
 def get_model_files():
-    scripts_dir = "scripts"
+    scripts_dir = cfg["scripts_dir"]
     if not os.path.isdir(scripts_dir):
         print(f"Error: '{scripts_dir}/' directory not found.", file=sys.stderr)
         sys.exit(1)
@@ -30,16 +48,28 @@ def select_files_tui(files):
         while True:
             stdscr.clear()
             max_y, max_x = stdscr.getmaxyx()
-            header_lines = 3
-            visible = max_y - header_lines - 2
 
             stdscr.attron(curses.A_BOLD)
             stdscr.addstr(0, 0, "Select script(s) to submit to SLURM")
             stdscr.attroff(curses.A_BOLD)
-            stdscr.addstr(1, 0, "↑/↓: navigate | SPACE: toggle | a: all | n: none | ENTER: submit | q: quit")
+            stdscr.addstr(1, 0, "↑/↓: navigate | SPACE: toggle | a: all | n: none | r: reset slurm settings | ENTER: submit | q: quit")
             stdscr.addstr(2, 0, "─" * min(max_x - 1, 70))
 
-            # Scroll handling
+            settings = [
+                f"time={cfg['time']}  nodes={cfg['nodes']}  ntasks={cfg['ntasks_per_node']}  gpus={cfg['gpus_per_node']}",
+                f"cpus={cfg['cpus_per_task']}  mem={cfg['mem']}  account={cfg['account']}  cuda={cfg['cuda_module']}",
+            ]
+            if cfg["partition"]:
+                settings[1] += f"  partition={cfg['partition']}"
+
+            for i, line in enumerate(settings):
+                stdscr.attron(curses.color_pair(1))
+                stdscr.addstr(3 + i, 2, line[:max_x - 3])
+                stdscr.attroff(curses.color_pair(1))
+
+            header_lines = 3 + len(settings) + 1
+            visible = max_y - header_lines - 2
+
             if cursor < scroll_offset:
                 scroll_offset = cursor
             elif cursor >= scroll_offset + visible:
@@ -84,10 +114,14 @@ def select_files_tui(files):
             elif key == ord("n"):
                 for i in range(len(selected)):
                     selected[i] = False
+            elif key == ord("r"):
+                cfg.update(DEFAULTS)
+                stdscr.addstr(max_y - 1, 0, "  ⟳ Reset to defaults" + " " * 20)
+                stdscr.refresh()
+                curses.napms(500)
             elif key in (curses.KEY_ENTER, 10, 13):
                 if any(selected):
                     return [files[i] for i, s in enumerate(selected) if s]
-                # Flash message if nothing selected
                 stdscr.addstr(max_y - 1, 0, "  ⚠ Select at least one file!" + " " * 20)
                 stdscr.refresh()
                 curses.napms(1000)
@@ -98,34 +132,35 @@ def select_files_tui(files):
 
 
 def submit_job(job_name, command):
-    # Determine the currently active virtual environment
-    activation_cmd = ""
+    # Virtual environment detection
     if "VIRTUAL_ENV" in os.environ:
-        venv_path = os.environ["VIRTUAL_ENV"]
-        activation_cmd = f"source {venv_path}/bin/activate"
+        activation_cmd = f"source {os.environ['VIRTUAL_ENV']}/bin/activate"
     elif "CONDA_DEFAULT_ENV" in os.environ:
-        conda_env = os.environ["CONDA_DEFAULT_ENV"]
-        activation_cmd = f"source activate {conda_env}" # Adjust to 'conda activate' if your cluster requires it
+        activation_cmd = f"source activate {os.environ['CONDA_DEFAULT_ENV']}"
     else:
         activation_cmd = "# No virtual environment detected"
 
-    slurm_script_content = f"""#!/bin/bash
-#SBATCH --job-name={job_name}
-#SBATCH --time=48:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=64gb
-#SBATCH --account=PAS2152
-#SBATCH --output=logs/{job_name}/%j/out.out
-#SBATCH --error=logs/{job_name}/%j/err.err
+    lines = [
+        "#!/bin/bash",
+        f"#SBATCH --job-name={job_name}",
+        f"#SBATCH --time={cfg['time']}",
+        f"#SBATCH --nodes={cfg['nodes']}",
+        f"#SBATCH --ntasks-per-node={cfg['ntasks_per_node']}",
+        f"#SBATCH --gpus-per-node={cfg['gpus_per_node']}",
+        f"#SBATCH --cpus-per-task={cfg['cpus_per_task']}",
+        f"#SBATCH --mem={cfg['mem']}",
+        f"#SBATCH --account={cfg['account']}",
+        f"#SBATCH --output={cfg['logs_dir']}/{job_name}/%j/out.out",
+        f"#SBATCH --error={cfg['logs_dir']}/{job_name}/%j/err.err",
+        f"#SBATCH --partition={cfg['partition']}" if cfg["partition"] else "",
+        "",
+        f"module load {cfg['cuda_module']}",
+        activation_cmd,
+        f"python {command}",
+    ]
 
-module load cuda/12.6.2
-{activation_cmd}
-python {command}
-"""
-#SBATCH --partition=gpu-exp
+    slurm_script_content = "\n".join(lines) + "\n"
+
     try:
         result = subprocess.run(
             ["sbatch"],
@@ -141,6 +176,7 @@ python {command}
         print("Error: 'sbatch' command not found. Are you on a Slurm cluster?", file=sys.stderr)
         sys.exit(1)
 
+
 def main():
     files = get_model_files()
     selected = select_files_tui(files)
@@ -152,7 +188,7 @@ def main():
     print(f"\nSubmitting {len(selected)} job(s)...\n")
     for filename in selected:
         job_name = filename.removesuffix(".py")
-        command = f"scripts/{filename}"
+        command = f"{cfg['scripts_dir']}/{filename}"
         print(f"  → {job_name}: {command}")
         submit_job(job_name, command)
 

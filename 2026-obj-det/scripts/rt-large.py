@@ -1,4 +1,5 @@
 from ultralytics import RTDETR
+import config
 
 
 def main():
@@ -7,7 +8,7 @@ def main():
 
     # Train
     results = model.train(
-        data="data.yaml",
+        data=config.DATA_DIR,
         epochs=100,
         imgsz=640,
         batch=16,

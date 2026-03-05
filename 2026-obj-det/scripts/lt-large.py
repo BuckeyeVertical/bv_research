@@ -1,9 +1,10 @@
 import lightly_train
+import config
 
 if __name__ == "__main__":
     # Train
     lightly_train.train_object_detection(
-        out="runs/detect/lt_detr_large",
+        out= config.OUT_DIR / "lt_detr_large",
         model="dinov3/convnext-large-ltdetr-coco",
         data={
             "path": "/fs/scratch/PAS2152/tclute/bv/final_dataset",
@@ -24,7 +25,7 @@ if __name__ == "__main__":
                 # Optional display name for the run.
                 "name": "lt_detr_large",
                 # Optional project name.
-                "project": "runs-detect",
+                "project": config.PROJECT,
                 # Optional version, mainly used to resume a previous run.
                 "log_model": False,
                 # Optional name for uploaded checkpoints. (default: None)

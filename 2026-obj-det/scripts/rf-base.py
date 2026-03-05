@@ -1,5 +1,6 @@
 from rfdetr import RFDETRBase
 import os
+import config
 
 os.environ["MASTER_ADDR"] = "localhost"
 os.environ["MASTER_PORT"] = "12366"
@@ -10,7 +11,7 @@ os.environ["WORLD_SIZE"] = "1"
 model = RFDETRBase()
 
 model.train(
-    dataset_dir="/fs/scratch/PAS2152/tclute/bv/coco_dataset",
+    dataset_dir=config.COCO_DATA_DIR,
     epochs=75,
     batch_size=8,
     grad_accum_steps=4,
@@ -31,6 +32,6 @@ model.train(
     tensorboard=True,
     output_dir="./out/rf-base-sahi",
     wandb=True,
-    project="runs-detect",
+    project=config.PROJECT,
     run="rf-base-sahi"
 )

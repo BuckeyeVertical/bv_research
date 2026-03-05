@@ -6,6 +6,12 @@ conda create -n .venv python=3.11 -y
 conda activate .venv
 pip install -r requirements.txt
 ```
-Also make sure that you have wandb auth set up.
+make sure that you have wandb auth set up.
+
+you can quickly set slurm directives by doing
+```bash
+export <slurm name>="<value>"
+
+```
 
 

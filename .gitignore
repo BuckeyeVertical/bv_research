@@ -27,3 +27,5 @@ output/
 *.pth
 Calibration/images/*
 logs/
+runs/detect
+runs/
