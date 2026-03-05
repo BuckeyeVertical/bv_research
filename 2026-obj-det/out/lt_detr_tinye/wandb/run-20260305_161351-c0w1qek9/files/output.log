@@ -1,0 +1,15 @@
+Checkpoint has different number of classes for enc_score_head. Adjusted weights/biases to match module configuration.[0m
+Checkpoint has different number of classes for dec_score_head. Adjusted weights/biases to match module configuration.[0m
+Checkpoint has 80 classes, module expects 2 classes. Adjusting denoising class embeddings.[0m
+Checkpoint has different number of classes for enc_score_head. Adjusted weights/biases to match module configuration.[0m
+Checkpoint has different number of classes for dec_score_head. Adjusted weights/biases to match module configuration.[0m
+Checkpoint has 80 classes, module expects 2 classes. Adjusting denoising class embeddings.[0m
+Training for 450000 steps...[0m
+Logging every 100 steps.[0m
+Validating every 1000 steps.[0m
+Saving checkpoints every 1000 steps.[0m
+Train Step      1/450000 | Train Loss: 25.9888 | Profiling [ GPU Util 12.5% | GPU Max Mem  4797.4 MB | Step Time 2.51s | Data Time 1.15s |    1 img/s ][0m
+Train Step      2/450000 | Train Loss: 21.9250 | Profiling [ GPU Util 19.0% | GPU Max Mem  5268.9 MB | Step Time 1.47s | Data Time 0.58s |    1 img/s ][0m
+Train Step      5/450000 | Train Loss: 31.7336 | Profiling [ GPU Util 42.4% | GPU Max Mem  5268.9 MB | Step Time 0.81s | Data Time 0.24s |    2 img/s ][0m
+Train Step     10/450000 | Train Loss: 64.4106 | Profiling [ GPU Util 51.3% | GPU Max Mem  5268.9 MB | Step Time 0.58s | Data Time 0.12s |    3 img/s ][0m
+Train Step     50/450000 | Train Loss: 30.6628 | Profiling [ GPU Util 53.9% | GPU Max Mem  5268.9 MB | Step Time 0.41s | Data Time 0.03s |    5 img/s ][0m

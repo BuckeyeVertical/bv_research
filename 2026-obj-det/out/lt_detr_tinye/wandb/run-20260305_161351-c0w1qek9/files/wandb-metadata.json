@@ -1,0 +1,85 @@
+{
+  "os":  "Linux-5.14.0-427.102.1.el9_4.x86_64-x86_64-with-glibc2.34",
+  "python":  "CPython 3.11.15",
+  "startedAt":  "2026-03-05T21:13:51.461084Z",
+  "program":  "/fs/scratch/PAS2152/tclute/bv_research/2026-obj-det/scripts/lt-tiny.py",
+  "codePath":  "2026-obj-det/scripts/lt-tiny.py",
+  "codePathLocal":  "scripts/lt-tiny.py",
+  "git":  {
+    "remote":  "git@github.com:BuckeyeVertical/bv_research.git",
+    "commit":  "39e3650e5261f5d81aaa4a4579b6e069640947df"
+  },
+  "email":  "tclute07@outlook.com",
+  "root":  "out/lt_detr_tinye",
+  "host":  "p0318.ten.osc.edu",
+  "executable":  "/users/PZS0713/tclute/.conda/envs/.env/bin/python",
+  "cpu_count":  48,
+  "cpu_count_logical":  48,
+  "gpu":  "Tesla V100S-PCIE-32GB",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "204010946560",
+      "used":  "34680143872"
+    }
+  },
+  "memory":  {
+    "total":  "404290719744"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "Tesla V100S-PCIE-32GB",
+      "memoryTotal":  "34359738368",
+      "cudaCores":  5120,
+      "architecture":  "Volta",
+      "uuid":  "GPU-f48c7073-fc90-1930-54d7-7fedb52c43e9"
+    }
+  ],
+  "cudaVersion":  "13.0",
+  "slurm":  {
+    "cluster_name":  "pitzer",
+    "conf":  "/var/spool/slurmd/conf-cache/slurm.conf",
+    "cpus_on_node":  "9",
+    "cpus_per_task":  "9",
+    "gpus_on_node":  "1",
+    "gpus_per_node":  "1",
+    "gtids":  "0",
+    "job_account":  "pas2152",
+    "job_cpus_per_node":  "9",
+    "job_end_time":  "1772918011",
+    "job_gid":  "5514",
+    "job_gpus":  "1",
+    "job_gres":  "gres/gpu:1,gres/gpfs:scratch:1",
+    "job_id":  "44556184",
+    "job_name":  "lt-tiny",
+    "job_nodelist":  "p0318",
+    "job_num_nodes":  "1",
+    "job_partition":  "gpu-exp",
+    "job_qos":  "pitzer-default",
+    "job_start_time":  "1772745211",
+    "job_uid":  "50167",
+    "job_user":  "tclute",
+    "jobid":  "44556184",
+    "localid":  "0",
+    "mem_per_node":  "65536",
+    "nnodes":  "1",
+    "nodeid":  "0",
+    "nodelist":  "p0318",
+    "nprocs":  "1",
+    "ntasks":  "1",
+    "ntasks_per_node":  "1",
+    "oom_kill_step":  "0",
+    "prio_process":  "0",
+    "procid":  "0",
+    "script_context":  "prolog_task",
+    "submit_dir":  "/fs/scratch/PAS2152/tclute/bv_research/2026-obj-det",
+    "submit_host":  "pitzer-login03.hpc.osc.edu",
+    "task_pid":  "949799",
+    "tasks_per_node":  "1",
+    "time_limit":  "172800",
+    "topology_addr":  "p0318",
+    "topology_addr_pattern":  "node",
+    "tres_per_task":  "cpu=8"
+  },
+  "writerId":  "t2obl3a4mzb11di153xlmc5dk3zh52v9"
+}
