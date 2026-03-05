@@ -1,0 +1,24 @@
+from ultralytics import YOLO
+
+
+def main():
+    # Load the pretrained YOLO26l model
+    model = YOLO("yolo26l.pt")
+
+    # Train
+    results = model.train(
+        data="/fs/scratch/PAS2152/tclute/bv/scripts/data.yaml",
+        epochs=100,
+        imgsz=640,
+        batch=16,
+        device=0,
+        workers=8,
+        patience=20,
+        save=True,
+        save_period=10,
+        project="runs/detect",
+        name="yolo26l",
+    )
+
+if __name__ == "__main__":
+    main()
