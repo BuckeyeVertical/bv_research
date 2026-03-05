@@ -1,0 +1,14 @@
+path: /fs/scratch/PAS2152/tclute/bv/final_dataset
+
+# Train and Validation image directories (relative to 'path')
+train: images/train
+val: images/val
+test: images/test
+
+
+nc: 2
+# Classes
+names:
+  0: person
+  1: tent
+
