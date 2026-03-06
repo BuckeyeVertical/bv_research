@@ -11,7 +11,7 @@ make sure that you have wandb auth set up.
 
 you can quickly set slurm directives by doing
 ```bash
-export <slurm name>="<value>"
+export <slurm name>=<value>
 
 ```
 
