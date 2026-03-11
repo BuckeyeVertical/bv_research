@@ -29,3 +29,4 @@ Calibration/images/*
 logs/
 runs/detect
 runs/
+2026-obj-det/wandb
