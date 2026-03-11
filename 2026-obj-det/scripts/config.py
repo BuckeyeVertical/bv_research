@@ -35,7 +35,7 @@ MODELS_CONFIG = {
             "device": "cuda:0",
         },
         "rf-base": {
-            "model_path": "runs/detect/rf-base/eval/latest.pth",
+            "model_path": "runs/detect/rf-base/checkpoint_best_ema.pth",
             "model_type": "rfdetr",
             "device": "cuda:0",
         },

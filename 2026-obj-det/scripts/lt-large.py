@@ -4,7 +4,7 @@ import config
 if __name__ == "__main__":
     # Train
     lightly_train.train_object_detection(
-        out= config.OUT_DIR / "lt_detr_large",
+        out= config.OUT_DIR + "lt_detr_large",
         model="dinov3/convnext-large-ltdetr-coco",
         data={
             "path": "/fs/scratch/PAS2152/tclute/bv/final_dataset",
@@ -15,26 +15,18 @@ if __name__ == "__main__":
                 1: "tent",
             },
         },
-        batch_size=2,
+        batch_size=4,
         model_args={
-            "lr": 0.0003,
+            "lr": 0.00001,
         },
         overwrite=True,
         logger_args={
             "wandb": {
-                # Optional display name for the run.
                 "name": "lt_detr_large",
-                # Optional project name.
                 "project": config.PROJECT,
-                # Optional version, mainly used to resume a previous run.
                 "log_model": False,
-                # Optional name for uploaded checkpoints. (default: None)
-                # "checkpoint_name": "checkpoint.ckpt",
-                # Optional, run offline without syncing to the W&B server. (default: False)
                 "offline": False,
-                # Optional, configure anonymous logging. (default: False)
                 "anonymous": False,
-                # Optional string to put at the beginning of metric keys.
                 "prefix": "",
             },
         }

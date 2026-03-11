@@ -16,7 +16,7 @@ def main():
         workers=8,
         patience=50,
         save=True,
-        project="runs/detect",
+        project=config.PROJECT,
         name="rtdetr-l",
     )
 

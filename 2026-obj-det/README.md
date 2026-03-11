@@ -13,6 +13,14 @@ you can quickly set slurm directives by doing
 ```bash
 export <slurm name>=<value>
 
+# export partition=gpu-exp
 ```
+
+Partition Values:
+gpu-exp
+gpu
+gpu-quad
+
+
 
 

@@ -4,7 +4,7 @@ import config
 if __name__ == "__main__":
     # Train
     lightly_train.train_object_detection(
-        out=config.OUT_DIR / "lt_detr_tiny",
+        out=config.OUT_DIR + "lt-tiny",
         model="dinov3/convnext-tiny-ltdetr-coco",
         data={
             "path": config.DATA_DIR,
@@ -15,14 +15,13 @@ if __name__ == "__main__":
                 1: "tent",
             },
         },
-        batch_size=2,
-        model_args={
-            "lr": 0.0003,
+        transform_args={
+            "image_size": (640, 640),
         },
         overwrite=True,
         logger_args={
             "wandb": {
-                "name": "lt_detr_tiny",
+                "name": "lt-tiny",
                 "project": config.PROJECT,
                 "log_model": False,
                 "offline": False,

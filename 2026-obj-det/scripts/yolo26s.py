@@ -1,4 +1,5 @@
 from ultralytics import YOLO
+import config
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
         patience=20,
         save=True,
         save_period=10,
-        project="runs/detect",
+        project=config.PROJECT,
         name="yolo26s",
     )
 
