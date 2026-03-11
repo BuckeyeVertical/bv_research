@@ -1,6 +1,7 @@
 import lightly_train
 import config
 
+
 if __name__ == "__main__":
     # Train
     lightly_train.train_object_detection(
