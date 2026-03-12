@@ -24,6 +24,8 @@ def load_env(path=".env"):
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV = load_env(os.path.join(SCRIPT_DIR, ".env"))
+SCRIPTS_DIR = os.path.join(SCRIPT_DIR, "scripts")
+LOGS_DIR = os.path.join(SCRIPT_DIR, "logs")
 
 
 def env_get(key, default=None, required=False):
@@ -55,13 +57,20 @@ def detect_env():
 
 
 def get_slurm_vars():
+    env_path = env_get("env-path")
+    if env_path is None:
+        env_path = detect_env()
+
+    gpus_per_node = env_get("gpus-per-node", "1")
+
     return {
-        "env-path": env_get("env-path", detect_env()),
+        "env-path": env_path,
         "account": env_get("account", required=True),
         "partition": env_get("partition", "gpu-exp"),
-        "gres": env_get("gres", "gpu:1"),
+        "gpus-per-node": gpus_per_node,
+        "ntasks-per-node": env_get("ntasks-per-node", gpus_per_node),
         "cpus-per-task": env_get("cpus-per-task", "8"),
-        "mem": env_get("mem", "64G"),
+        "mem": env_get("mem"),
         "time": env_get("time", "48:00:00"),
         "cuda-module": env_get("cuda-module", "cuda/12.6.2"),
         "conda-module": env_get("conda-module", "miniconda3/24.1.2-py310"),
@@ -69,13 +78,12 @@ def get_slurm_vars():
 
 
 def get_model_files():
-    scripts_dir = "scripts"
-    if not os.path.isdir(scripts_dir):
-        print(f"Error: '{scripts_dir}/' directory not found.", file=sys.stderr)
+    if not os.path.isdir(SCRIPTS_DIR):
+        print(f"Error: '{SCRIPTS_DIR}/' directory not found.", file=sys.stderr)
         sys.exit(1)
-    files = sorted(f for f in os.listdir(scripts_dir) if f.endswith(".py"))
+    files = sorted(f for f in os.listdir(SCRIPTS_DIR) if f.endswith(".py"))
     if not files:
-        print(f"Error: No .py files found in '{scripts_dir}/'.", file=sys.stderr)
+        print(f"Error: No .py files found in '{SCRIPTS_DIR}/'.", file=sys.stderr)
         sys.exit(1)
     return files
 
@@ -94,8 +102,8 @@ def select_files_tui(files, slurm_vars):
 
         # Batch variables to display (exclude internal-only keys)
         display_vars = {
-            k: v for k, v in slurm_vars.items()
-            if k not in ("env-path", "cuda-module", "conda-module")
+            k: str(v) for k, v in slurm_vars.items()
+            if k not in ("env-path", "cuda-module", "conda-module") and v is not None
         }
 
         while True:
@@ -211,29 +219,33 @@ def select_files_tui(files, slurm_vars):
 
 
 def submit_job(job_name, command, slurm_vars):
-    os.makedirs(f"logs/{job_name}", exist_ok=True)
+    job_log_dir = os.path.join(LOGS_DIR, job_name)
+    os.makedirs(job_log_dir, exist_ok=True)
+    mem_line = ""
+    if slurm_vars["mem"]:
+        mem_line = f"#SBATCH --mem={slurm_vars['mem']}\n"
 
     slurm_script_content = f"""#!/bin/bash
 #SBATCH --job-name={job_name}
 #SBATCH --time={slurm_vars["time"]}
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node={slurm_vars["ntasks-per-node"]}
 #SBATCH --cpus-per-task={slurm_vars["cpus-per-task"]}
-#SBATCH --mem={slurm_vars["mem"]}
-#SBATCH --account={slurm_vars["account"]}
+{mem_line}#SBATCH --account={slurm_vars["account"]}
 #SBATCH --partition={slurm_vars["partition"]}
-#SBATCH --gres={slurm_vars["gres"]}
-#SBATCH --output=logs/{job_name}/%j.out
-#SBATCH --error=logs/{job_name}/%j.err
+#SBATCH --gpus-per-node={slurm_vars["gpus-per-node"]}
+#SBATCH --chdir={SCRIPT_DIR}
+#SBATCH --output={job_log_dir}/%j.out
+#SBATCH --error={job_log_dir}/%j.err
 
 module purge
 module load {slurm_vars["conda-module"]}
 module load {slurm_vars["cuda-module"]}
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "{slurm_vars["env-path"]}"
+export PYTHONUNBUFFERED=1
 
-
-python {command}
+srun python -u "{command}"
 """
 
     try:
@@ -267,7 +279,7 @@ def main():
     print(f"\nSubmitting {len(selected)} job(s)...\n")
     for filename in selected:
         job_name = filename.removesuffix(".py")
-        command = f"scripts/{filename}"
+        command = os.path.join(SCRIPTS_DIR, filename)
         print(f"  → {job_name}: {command}")
         submit_job(job_name, command, slurm_vars)
 
